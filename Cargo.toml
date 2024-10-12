@@ -2,5 +2,22 @@
 name = "zero2prod"
 version = "0.1.0"
 edition = "2021"
+authors = ["蔡元瑞 <caiyuanrui@outlook.com>"]
+
+[lib]
+path = "src/lib.rs"
+
+# [[]] is an array syntax
+# only one library but multiple binaries allowed in a project
+[[bin]]
+path = "src/main.rs"
+name = "zero2prod"
 
 [dependencies]
+dotenv = "0.15.0"
+dotenv_codegen = "0.15.0"
+actix-web = "4"
+tokio = {version = "1", features= ["macros","rt-multi-thread"]}
+
+[dev-dependencies]
+reqwest = "0.11"
