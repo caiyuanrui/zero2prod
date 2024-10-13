@@ -41,7 +41,7 @@ jobs:
 
   coverage:
     name: Code coverage
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     container:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
