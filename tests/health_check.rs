@@ -1,4 +1,6 @@
+use once_cell::sync::Lazy;
 use reqwest::StatusCode;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::{borrow::Borrow, net::TcpListener};
 use uuid::Uuid;
@@ -6,6 +8,7 @@ use uuid::Uuid;
 use zero2prod::{
     configuration::{self, DatabaseSettings},
     startup::run,
+    telementry::{get_subscriber, init_subscriber},
 };
 
 #[derive(Debug)]
@@ -14,7 +17,27 @@ pub struct TestApp {
     pub pool: PgPool,
 }
 
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let default_filter_level = "debug".to_string();
+    let subscriber_name = "test".to_string();
+
+    match std::env::var("TEST_LOG") {
+        Ok(val) => {
+            println!("{val:?}");
+            let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::stdout);
+            init_subscriber(subscriber);
+        }
+        Err(e) => {
+            println!("{e:?}");
+            let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::sink);
+            init_subscriber(subscriber);
+        }
+    }
+});
+
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port.");
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{port}");
@@ -34,7 +57,7 @@ async fn spawn_app() -> TestApp {
 
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Create database
-    let mut conn = PgConnection::connect(&config.connction_string_without_db())
+    let mut conn = PgConnection::connect(config.connction_string_without_db().expose_secret())
         .await
         .expect("Failed to connect to Postgres.");
     conn.execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
@@ -42,7 +65,7 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to create database.");
 
     // Migrate database
-    let conn_pool = PgPool::connect(&config.connection_string())
+    let conn_pool = PgPool::connect(config.connection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres.");
     sqlx::migrate!("./migrations")
