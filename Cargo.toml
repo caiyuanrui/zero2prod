@@ -2,7 +2,7 @@
 name = "zero2prod"
 version = "0.1.0"
 edition = "2021"
-authors = ["蔡元瑞 <caiyuanrui@outlook.com>"]
+authors = ["Yuanrui Cai <caiyuanrui@outlook.com>"]
 
 [lib]
 path = "src/lib.rs"
@@ -20,6 +20,10 @@ serde = {version = "1.0.210", features = ["derive"]}
 config = "0.14.0"
 chrono = "0.4.38"
 actix-cors = "0.7.0"
+tracing = {version = "0.1.7", features = ["log"]}
+tracing-subscriber = {version = "0.3", features = ["registry", "env-filter"]}
+tracing-bunyan-formatter = "0.3"
+tracing-log = "0.1"
 
 [dependencies.sqlx]
 version = "0.8.2"
